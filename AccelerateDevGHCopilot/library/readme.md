@@ -2,87 +2,87 @@
 
 ## Description
 
-Library App is a modular Python application designed to help library staff manage core operations such as book loans, patron management, and inventory tracking. The project follows a clean architecture, separating domain logic, data access, and user interaction through a console interface. Data is stored in JSON files, making the app easy to set up and run in any environment.
+Library App is a Python-based console application for managing a library's books, patrons, and loans. It supports searching for patrons and books, checking out and returning books, extending loans, and renewing patron memberships. Data is persisted in JSON files, and the application is structured using a clean separation of entities, repositories, services, and console UI.
 
 ## Project Structure
 
-- Library/
-  - readme.md
-  - application_core/
+- application_core/
     - entities/
-      - author.py
-      - book_item.py
-      - book.py
-      - loan.py
-      - patron.py
+        - author.py
+        - book.py
+        - book_item.py
+        - loan.py
+        - patron.py
     - enums/
-      - loan_extension_status.py
-      - loan_return_status.py
-      - membership_renewal_status.py
-      - ...
+        - loan_extension_status.py
+        - loan_return_status.py
+        - membership_renewal_status.py
     - interfaces/
-      - iloan_repository.py
-      - iloan_service.py
-      - ipatron_repository.py
-      - ipatron_service.py
-      - ...
+        - iloan_repository.py
+        - iloan_service.py
+        - ipatron_repository.py
+        - ipatron_service.py
     - services/
-      - loan_service.py
-      - patron_service.py
-      - ...
-  - console/
+        - loan_service.py
+        - patron_service.py
+- console/
     - book_repository.py
     - common_actions.py
     - console_app.py
     - console_state.py
     - main.py
-  - infrastructure/
+- infrastructure/
     - json_data.py
     - json_loan_repository.py
     - json_patron_repository.py
     - Json/
-      - Authors.json
-      - Books.json
-      - BookItems.json
-      - Loans.json
-      - Patrons.json
-  - tests/
-    - __init__.py
+        - Authors.json
+        - Books.json
+        - BookItems.json
+        - Loans.json
+        - Patrons.json
+- tests/
     - test_loan_service.py
     - test_patron_service.py
+    - __init__.py
+- readme.md
 
 ## Key Classes and Interfaces
 
-- **Entities (application_core/entities/):**
-  - `Author`, `Book`, `BookItem`, `Patron`, `Loan`: Represent core library objects.
-- **Enums (application_core/enums/):**
-  - `LoanExtensionStatus`, `LoanReturnStatus`, `MembershipRenewalStatus`: Enumerations for domain-specific statuses.
-- **Interfaces (application_core/interfaces/):**
-  - `ILoanRepository`, `ILoanService`, `IPatronRepository`, `IPatronService`: Define abstractions for repositories and services.
-- **Services (application_core/services/):**
-  - `LoanService`, `PatronService`: Business logic for managing loans, patrons, and books.
-- **Console (console/):**
-  - `ConsoleApp`: Main entry point for the console interface.
-  - `main.py`: Launches the application.
-- **Infrastructure (infrastructure/):**
-  - `json_data.py`: Utilities for JSON file operations.
-  - `json_loan_repository.py`, `json_patron_repository.py`: Data access implementations using JSON files.
-- **Tests (tests/):**
-  - Unit tests for core business logic.
+- **Entities**
+    - `Author`, `Book`, `BookItem`, `Loan`, `Patron`: Data models for library domain objects.
+- **Enums**
+    - `LoanExtensionStatus`, `LoanReturnStatus`, `MembershipRenewalStatus`: Status codes for operations.
+- **Interfaces**
+    - `ILoanRepository`, `ILoanService`, `IPatronRepository`, `IPatronService`: Abstract base classes defining contracts for repositories and services.
+- **Services**
+    - `LoanService`: Handles loan operations (checkout, return, extend).
+    - `PatronService`: Handles patron operations (renew membership, search).
+- **Repositories**
+    - `JsonLoanRepository`, `JsonPatronRepository`: Implement data access using JSON files.
+    - `JsonData`: Loads and saves all data from/to JSON files.
+- **Console UI**
+    - `ConsoleApp`: Main application loop and user interaction.
+    - `common_actions.py`, `console_state.py`: Define UI actions and states.
 
 ## Usage
 
-1. **Install Python 3.7+** if not already installed.
-2. **Navigate to the Library directory:**
-   ```
-   cd Library
-   ```
-3. **Run the application:**
+1. **Install Requirements**  
+   No external dependencies are required beyond Python 3.7+.
+
+2. **Run the Application**  
+   From the `console` directory (or project root), run:
    ```
    python -m console.main
    ```
-4. **Follow the on-screen prompts** to manage books, patrons, and loans.
+   Follow the on-screen prompts to search for patrons, manage loans, and check book availability.
+
+3. **Run Tests**  
+   From the project root, run:
+   ```
+   python -m unittest discover tests
+   ```
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT
