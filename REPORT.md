@@ -56,3 +56,4 @@
   - 실습예제 : https://microsoftlearning.github.io/mslearn-github-copilot-dev/
   - https://microsoftlearning.github.io/mslearn-github-copilot-dev/Instructions/Labs/LAB_AK_02_analyze_document_code_py.html
   - https://microsoftlearning.github.io/mslearn-github-copilot-dev/Instructions/Labs/LAB_AK_03_develop_code_features_py.html
+  - https://microsoftlearning.github.io/mslearn-github-copilot-dev/Instructions/Labs/LAB_AK_05_refactor_improve_existing_code_py.html#analyze-and-refactor-code-using-the-chat-view-in-ask-and-edit-mode

@@ -7,6 +7,25 @@ from application_core.interfaces.ipatron_service import IPatronService
 from typing import Optional
 
 class ConsoleApp:
+    # Enum 및 액션 설명을 위한 static dictionary
+    CONSOLE_STATE_DESCRIPTIONS = {
+        ConsoleState.PATRON_SEARCH: "Patron Search",
+        ConsoleState.PATRON_SEARCH_RESULTS: "Patron Search Results",
+        ConsoleState.PATRON_DETAILS: "Patron Details",
+        ConsoleState.LOAN_DETAILS: "Loan Details",
+        ConsoleState.QUIT: "Quit"
+    }
+
+    COMMON_ACTIONS_DESCRIPTIONS = {
+        CommonActions.RETURN_LOANED_BOOK: ' - "r" to mark as returned',
+        CommonActions.EXTEND_LOANED_BOOK: ' - "e" to extend the book loan',
+        CommonActions.RENEW_PATRON_MEMBERSHIP: ' - "m" to extend patron\'s membership',
+        CommonActions.SEARCH_PATRONS: ' - "s" for new search',
+        CommonActions.SEARCH_BOOKS: ' - "b" to check for book availability',
+        CommonActions.QUIT: ' - "q" to quit',
+        CommonActions.SELECT: ' - type a number to select a list item.'
+    }
+
     def __init__(
         self,
         loan_service: ILoanService,
@@ -27,33 +46,31 @@ class ConsoleApp:
 
     def write_input_options(self, options):
         print("Input Options:")
-        if options & CommonActions.RETURN_LOANED_BOOK:
-            print(' - "r" to mark as returned')
-        if options & CommonActions.EXTEND_LOANED_BOOK:
-            print(' - "e" to extend the book loan')
-        if options & CommonActions.RENEW_PATRON_MEMBERSHIP:
-            print(' - "m" to extend patron\'s membership')
-        if options & CommonActions.SEARCH_PATRONS:
-            print(' - "s" for new search')
-        if options & CommonActions.SEARCH_BOOKS:
-            print(' - "b" to check for book availability')
-        if options & CommonActions.QUIT:
-            print(' - "q" to quit')
-        if options & CommonActions.SELECT:
-            print(' - type a number to select a list item.')
+        for action, description in self.COMMON_ACTIONS_DESCRIPTIONS.items():
+            if options & action:
+                print(description)
 
     def run(self) -> None:
         while True:
-            if self._current_state == ConsoleState.PATRON_SEARCH:
-                self._current_state = self.patron_search()
-            elif self._current_state == ConsoleState.PATRON_SEARCH_RESULTS:
-                self._current_state = self.patron_search_results()
-            elif self._current_state == ConsoleState.PATRON_DETAILS:
-                self._current_state = self.patron_details()
-            elif self._current_state == ConsoleState.LOAN_DETAILS:
-                self._current_state = self.loan_details()
-            elif self._current_state == ConsoleState.QUIT:
+            # 명시적 매핑을 사용한 상태 전이
+            state_handlers = {
+                ConsoleState.PATRON_SEARCH: self.patron_search,
+                ConsoleState.PATRON_SEARCH_RESULTS: self.patron_search_results,
+                ConsoleState.PATRON_DETAILS: self.patron_details,
+                ConsoleState.LOAN_DETAILS: self.loan_details,
+                ConsoleState.QUIT: lambda: ConsoleState.QUIT
+            }
+            handler = state_handlers.get(self._current_state)
+            if handler is None:
+                print(f"Unknown state: {self._current_state}")
                 break
+            next_state = handler()
+            if next_state not in state_handlers:
+                print(f"Unknown next state: {next_state}")
+                break
+            if next_state == ConsoleState.QUIT:
+                break
+            self._current_state = next_state
 
     def patron_search(self) -> ConsoleState:
         search_input = input("Enter a string to search for patrons by name: ").strip()
@@ -144,17 +161,15 @@ class ConsoleApp:
         return input("Enter your choice: ").strip().lower()
 
     def _handle_patron_details_selection(self, selection, patron, valid_loans):
-        if selection == 'q':
-            return ConsoleState.QUIT
-        elif selection == 's':
-            return ConsoleState.PATRON_SEARCH
-        elif selection == 'm':
-            status = self._patron_service.renew_membership(patron.id)
-            print(status)
-            self.selected_patron_details = self._patron_repository.get_patron(patron.id)
-            return ConsoleState.PATRON_DETAILS
-        elif selection == 'b':
-            return self.search_books()  # Call the new search_books method
+        # 명시적 매핑을 사용한 입력 처리
+        action_map = {
+            'q': lambda: ConsoleState.QUIT,
+            's': lambda: ConsoleState.PATRON_SEARCH,
+            'm': lambda: self._renew_membership_and_refresh(patron),
+            'b': lambda: self.search_books()
+        }
+        if selection in action_map:
+            return action_map[selection]()
         elif selection.isdigit():
             idx = int(selection)
             if 1 <= idx <= len(valid_loans):
@@ -166,13 +181,20 @@ class ConsoleApp:
             print("Invalid input. Please enter a number, 'm', 'b', 's', or 'q'.")
             return ConsoleState.PATRON_DETAILS
 
+    def _renew_membership_and_refresh(self, patron):
+        status = self._patron_service.renew_membership(patron.id)
+        print(status)
+        self.selected_patron_details = self._patron_repository.get_patron(patron.id)
+        return ConsoleState.PATRON_DETAILS
+
     def _handle_no_loans_selection(self, selection):
-        if selection == 'q':
-            return ConsoleState.QUIT
-        elif selection == 's':
-            return ConsoleState.PATRON_SEARCH
-        elif selection == 'b':
-            return self.search_books()  # Handle SEARCH_BOOKS when no loans
+        action_map = {
+            'q': lambda: ConsoleState.QUIT,
+            's': lambda: ConsoleState.PATRON_SEARCH,
+            'b': lambda: self.search_books()
+        }
+        if selection in action_map:
+            return action_map[selection]()
         else:
             print("Invalid input.")
             return ConsoleState.PATRON_DETAILS
@@ -277,24 +299,35 @@ class ConsoleApp:
             options |= CommonActions.RETURN_LOANED_BOOK | CommonActions.EXTEND_LOANED_BOOK
         self.write_input_options(options)
         selection = input("Enter your choice: ").strip().lower()
-        if selection == 'q':
-            return ConsoleState.QUIT
-        elif selection == 's':
-            return ConsoleState.PATRON_SEARCH
-        elif selection == 'r' and not getattr(loan, 'return_date', None):
-            status = self._loan_service.return_loan(loan.id)
-            print("Book was successfully returned.")
-            print(status)
-            self.selected_loan_details = self._loan_repository.get_loan(loan.id)
-            return ConsoleState.LOAN_DETAILS
-        elif selection == 'e' and not getattr(loan, 'return_date', None):
-            status = self._loan_service.extend_loan(loan.id)
-            print(status)
-            self.selected_loan_details = self._loan_repository.get_loan(loan.id)
-            return ConsoleState.LOAN_DETAILS
+        # 명시적 매핑을 사용한 입력 처리
+        action_map = {
+            'q': lambda: ConsoleState.QUIT,
+            's': lambda: ConsoleState.PATRON_SEARCH,
+            'r': lambda: self._return_loan_and_refresh(loan) if not getattr(loan, 'return_date', None) else self._invalid_input(),
+            'e': lambda: self._extend_loan_and_refresh(loan) if not getattr(loan, 'return_date', None) else self._invalid_input()
+        }
+        if selection in action_map:
+            return action_map[selection]()
         else:
             print("Invalid input.")
             return ConsoleState.LOAN_DETAILS
+
+    def _return_loan_and_refresh(self, loan):
+        status = self._loan_service.return_loan(loan.id)
+        print("Book was successfully returned.")
+        print(status)
+        self.selected_loan_details = self._loan_repository.get_loan(loan.id)
+        return ConsoleState.LOAN_DETAILS
+
+    def _extend_loan_and_refresh(self, loan):
+        status = self._loan_service.extend_loan(loan.id)
+        print(status)
+        self.selected_loan_details = self._loan_repository.get_loan(loan.id)
+        return ConsoleState.LOAN_DETAILS
+
+    def _invalid_input(self):
+        print("Invalid input.")
+        return ConsoleState.LOAN_DETAILS
 
 from application_core.services.loan_service import LoanService
 from application_core.services.patron_service import PatronService
