@@ -36,6 +36,8 @@ class ConsoleApp:
             print(' - "q" to quit')
         if options & CommonActions.SELECT:
             print(' - type a number to select a list item.')
+        if options & CommonActions.SEARCH_BOOKS:
+            print(' - "b" to check for book availability')
 
     def run(self) -> None:
         while True:
@@ -107,6 +109,7 @@ class ConsoleApp:
                 | CommonActions.SEARCH_PATRONS
                 | CommonActions.QUIT
                 | CommonActions.SELECT
+                | CommonActions.SEARCH_BOOKS  # 추가됨
             )
             selection = self._get_patron_details_input(options)
             return self._handle_patron_details_selection(selection, patron, valid_loans)
@@ -115,6 +118,7 @@ class ConsoleApp:
             options = (
                 CommonActions.SEARCH_PATRONS
                 | CommonActions.QUIT
+                | CommonActions.SEARCH_BOOKS  # 추가됨
             )
             selection = self._get_patron_details_input(options)
             return self._handle_no_loans_selection(selection)
@@ -146,6 +150,9 @@ class ConsoleApp:
             print(status)
             self.selected_patron_details = self._patron_repository.get_patron(patron.id)
             return ConsoleState.PATRON_DETAILS
+        elif selection == 'b':
+            self.search_books()
+            return ConsoleState.PATRON_DETAILS
         elif selection.isdigit():
             idx = int(selection)
             if 1 <= idx <= len(valid_loans):
@@ -154,17 +161,16 @@ class ConsoleApp:
             print("Invalid selection. Please enter a number shown in the list above.")
             return ConsoleState.PATRON_DETAILS
         else:
-            print("Invalid input. Please enter a number, 'm', 's', or 'q'.")
+            print("Invalid input. Please enter a number, 'm', 's', 'b', or 'q'.")
             return ConsoleState.PATRON_DETAILS
 
-    def _handle_no_loans_selection(self, selection):
-        if selection == 'q':
-            return ConsoleState.QUIT
-        elif selection == 's':
-            return ConsoleState.PATRON_SEARCH
-        else:
-            print("Invalid input.")
-            return ConsoleState.PATRON_DETAILS
+    def search_books(self):
+        book_title = input("Enter a book title to search for: ").strip()
+        if not book_title:
+            print("No book title provided. Please try again.")
+            return
+        print(f"Searching for book: {book_title}")
+        # Book search logic to be implemented here
 
     def loan_details(self) -> ConsoleState:
         loan = self.selected_loan_details
