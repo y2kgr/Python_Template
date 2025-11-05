@@ -52,3 +52,6 @@
 
 ## 실습환경
 - https://lms.godeploy.it/ 회원가입 후 실습 예정(온라인 실습 환경(버추얼 랩) 및 학습 관리 시스템(LMS)을 제공하는 플랫폼)
+- 실습자료
+  - https://microsoftlearning.github.io/mslearn-github-copilot-dev/Instructions/Labs/LAB_AK_02_analyze_document_code_py.html
+  - https://microsoftlearning.github.io/mslearn-github-copilot-dev/Instructions/Labs/LAB_AK_03_develop_code_features_py.html
